@@ -105,8 +105,8 @@ function generateGrid() {
         alert('Maximum number of mines allowed for this grid size is ' + numRows*numColumns);
         return false;
     }
-    if (numRows * numColumns > 480 || numMines > 99) {
-        alert('Maximum grid size is 16x30 and 99 mines');
+    if (numRows * numColumns > 480 || numMines > 120) {
+        alert('Maximum grid size is 16x30 and 120 mines');
         return false;
     }
     unflaggedMines = numMines;
