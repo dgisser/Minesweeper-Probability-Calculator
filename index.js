@@ -18,6 +18,7 @@ let sec;
 let timer;
 let isWin;
 let hoveredElement;
+let hardQuit = false;
 
 // Return all current variables for debugging
 function getVariables() {
@@ -81,6 +82,7 @@ let generatedGrid = false;
 function generateGrid() {
     // Assign First Click Attribute
     firstClick = true;
+    hardQuit = true;
 
     // Remove Old Table
     resetTimer();
@@ -322,6 +324,9 @@ function neighborCount(mineGrid) {
 }
 
 function revealCellContents(i, j) {
+    if (hardQuit) {
+        return;
+    }
     // Run related functions for player first click
     if (firstClick == true) {
         firstClick = false;
@@ -342,17 +347,13 @@ function revealCellContents(i, j) {
 
     // Detect loss
     if (mineGrid[i][j].mine == true) {
+        hardQuit = true;
         clearInterval(timer);
         for (let r = 0; r < mineGrid.length; r++) {
             for (let c = 0; c < mineGrid[r].length; c++) {
                 if (mineGrid[r][c].flag == false && mineGrid[r][c].mine == true) {
                     mineGrid[r][c].open = true;
                 }
-            }
-        }
-        // Reset old probability values
-        for (let r = 0; r < mineGrid.length; r++) {
-            for (let c = 0; c < mineGrid[i].length; c++) {
                 mineGrid[r][c].mineArr = 0;
                 mineGrid[r][c].probability = -1;
             }
@@ -363,12 +364,13 @@ function revealCellContents(i, j) {
 
         // Display table
         table.innerHTML = '';
-        makeTable(mineGrid, table);
+        makeTable(mineGrid, table, false);
+        return;
     }
 
     // Reset old probability values
     for (let r = 0; r < mineGrid.length; r++) {
-        for (let c = 0; c < mineGrid[i].length; c++) {
+        for (let c = 0; c < mineGrid[r].length; c++) {
             mineGrid[r][c].mineArr = 0;
             mineGrid[r][c].probability = -1;
         }
@@ -425,6 +427,7 @@ function revealCell(e) {
     if (flagMode.checked == true) {
         e.preventDefault();
     }
+    hardQuit = false;
 
     // Get cell index
     let id = (this.id).split('_');
@@ -548,14 +551,14 @@ function getColor(value){
 }
 
 // Generate HTML table from grid
-function makeTable(mineGrid, table, withProb) {
+function makeTable(mineGrid, table, notEnd) {
     let cellsOpen = 0;
     for (let i = 0; i < mineGrid.length; i++) {
         let row = document.createElement('tr');
         for (let j = 0; j < mineGrid[i].length; j++) {
             let cell = document.createElement('td');
             cell.id = i + '_' + j;
-            if (mineGrid[i][j].edge && !mineGrid[i][j].flag) {
+            if (mineGrid[i][j].edge && !mineGrid[i][j].flag && notEnd) {
                 cell.style.backgroundColor = getColor(mineGrid[i][j].probability);
             }
             if (mineGrid[i][j].open == false) {
