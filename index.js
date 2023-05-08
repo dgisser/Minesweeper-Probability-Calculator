@@ -509,7 +509,9 @@ function revealFlagged() {
     for (let i = 0; i < mineGrid.length; i++) {
         for (let j = 0; j < mineGrid[i].length; j++) {
             mineGrid[i][j].mineArr = 0;
-            mineGrid[i][j].probability = -1;
+            if (mineGrid[i][j].probability != 0 && mineGrid[i][j].probability != 100) {
+                mineGrid[i][j].probability = -1;
+            }
         }
     }
     hundredCount = 0;
