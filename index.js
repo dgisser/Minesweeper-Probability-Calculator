@@ -325,6 +325,7 @@ function neighborCount(mineGrid) {
 
 function revealCellContents(i, j) {
     if (hardQuit) {
+        revealRunning = false;
         return;
     }
     // Run related functions for player first click
@@ -365,6 +366,7 @@ function revealCellContents(i, j) {
         // Display table
         table.innerHTML = '';
         makeTable(mineGrid, table, false);
+        revealRunning = false;
         return;
     }
 
@@ -399,6 +401,7 @@ function revealCellContents(i, j) {
         minesRemaining.textContent = 'Mines Remaining: ' + unflaggedMines;
         table.innerHTML = '';
         makeTable(mineGrid, table);
+        revealRunning = false;
     } else {
         let row = -1;
         let col = -1;
@@ -417,12 +420,20 @@ function revealCellContents(i, j) {
             setTimeout(() => {
                 revealCellContents(row, col);
             }, 100);
+        } else{
+            revealRunning = false;
         }
     }
 }
 
+let revealRunning = false;
 // Run all related functions upon player click
 function revealCell(e) {
+    if (revealRunning) {
+        e.preventDefault();
+        return;
+    }
+    revealRunning = true;
     // Prevent content menu pop up
     if (flagMode.checked == true) {
         e.preventDefault();
@@ -434,7 +445,6 @@ function revealCell(e) {
     let i = parseInt(id[0]);
     let j = parseInt(id[1]);
     revealCellContents(i,j);
-    
 }
 
 function flagLogic(specialId) {
@@ -505,15 +515,6 @@ function revealFlagged() {
         return;
     }
 
-    // Reset old probability values
-    for (let i = 0; i < mineGrid.length; i++) {
-        for (let j = 0; j < mineGrid[i].length; j++) {
-            mineGrid[i][j].mineArr = 0;
-            if (mineGrid[i][j].probability != 0 && mineGrid[i][j].probability != 100) {
-                mineGrid[i][j].probability = -1;
-            }
-        }
-    }
     hundredCount = 0;
     arrGrid = [];
     edgeArr = [];
@@ -1461,6 +1462,9 @@ function canNotBeMine(mineGrid, grid, i, j) {
 
 // Recursively generate all possible mine arrangements for open edges
 function generateArrangements(mineGrid, grid, index) {
+    if (edgeArr.length > 10000) {
+        return;
+    }
     let i = grid[index].r;
     let j = grid[index].c;
     if (canBeMine(mineGrid, grid, i, j) == true) {
