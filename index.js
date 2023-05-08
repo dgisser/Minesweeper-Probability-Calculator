@@ -1462,7 +1462,7 @@ function canNotBeMine(mineGrid, grid, i, j) {
 
 // Recursively generate all possible mine arrangements for open edges
 function generateArrangements(mineGrid, grid, index) {
-    if (edgeArr.length > 10000) {
+    if (edgeArr.length > 500) {
         return;
     }
     let i = grid[index].r;
