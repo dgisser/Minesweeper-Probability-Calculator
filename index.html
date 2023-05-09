@@ -20,18 +20,15 @@
         &nbsp;
         <input type="button" onclick="generateGrid()" value="New Game">
         <!-- <input type="button" onclick="getVariables()" value="Variable Return"> -->
-        <br>
-        <input type="button" title="Show cells that must or must not be mines derived from logic." onclick="generateProbability(false)" value="Get Logic">
         &nbsp;
-        <input type="button" title="Show probabilities of cells being mines." onclick="generateProbability(true)" value="Get Probabilities">
-        <input type="checkbox" title="Include probabilities for unbordered cells." id="nonEdgeProbability" onclick="toggleShowNonEdge()">
-        <label for="nonEdge">All</label>
+        <input type="checkbox" title="Include probabilities for unbordered cells." id="nonEdgeProbability" onclick="toggleShowNonEdge()" style="visibility:hidden">
+        <label for="nonEdge" style="visibility:hidden">All</label>
       </form>
     <div id="timerBlock">
         <span id ="minesRemaining"></span>
         <span id="minutes">00</span>:<span id="seconds">00</span>
-        <input type="checkbox" title="Change left click to flag. You can also click on revealed empty cells to switch modes." id="flagMode" onclick="toggleFlagMode(false)">
-        <label for="flagMode">Flag Mode</label>
+        <input type="checkbox" title="Change left click to flag. You can also click on revealed empty cells to switch modes." id="flagMode" onclick="toggleFlagMode(false)" style="visibility:hidden">
+        <label for="flagMode" style="visibility:hidden">Flag Mode</label>
     </div>
     <script src="index.js"\> </script>
     <script>generateGrid()</script>
