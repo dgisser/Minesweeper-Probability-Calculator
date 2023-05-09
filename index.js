@@ -189,10 +189,10 @@ function generateProbability(isAllProbability) {
         }
     }
     if (arrGrid.length > 0) {
-        generateArrangements(mineGrid, JSON.parse(JSON.stringify(arrGrid)), 0);
-        if (arrGrid.length > 30) {
+        // generateArrangements(mineGrid, JSON.parse(JSON.stringify(arrGrid)), 0);
+        // if (arrGrid.length > 20) {
             iterativeGenerateArrangements(mineGrid, arrGrid);
-        }
+        // }
             
         probabilityCalculation(edgeArr, mineGrid, isAllProbability);
     }
@@ -1472,7 +1472,8 @@ const pickRandomObject = objList => objList[Math.floor(Math.random() * objList.l
 
 // Iteratively generate all possible mine arrangements for open edges
 function iterativeGenerateArrangements(mineGrid, grid) {
-    while (edgeArr.length < 330) {
+    let numIter = 0;
+    while (edgeArr.length < 400 || numIter <=4) {
         const curPatterns = [JSON.parse(JSON.stringify(grid))];
         let hasBroken = false;
         const randomBase = Math.floor(Math.random() * grid.length)
@@ -1492,7 +1493,7 @@ function iterativeGenerateArrangements(mineGrid, grid) {
                 const a = canBeMine(mineGrid, curPattern, i, j)
                 const b = canNotBeMine(mineGrid, curPattern, i, j)
                 if (a && b) {
-                    if (curPatterns.length < 400) {
+                    if (curPatterns.length < 300) {
                         const patternNo = JSON.parse(JSON.stringify(curPattern));
                         curPattern[index].mine = true;
                         patternNo[index].mine = false;
@@ -1517,6 +1518,7 @@ function iterativeGenerateArrangements(mineGrid, grid) {
         }
         if (!hasBroken) {
             edgeArr = edgeArr.concat(curPatterns)
+            numIter += 1
         }
     }
 }
