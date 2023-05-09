@@ -1646,9 +1646,6 @@ function probabilityCalculation(edgeArr, mineGrid, allProbability) {
         for (j = 0; j < mineGrid[i].length; j++) {
             if (mineGrid[i][j].edge == true && mineGrid[i][j].probability < 0) {
                 const edgeProbability = Math.round(mineGrid[i][j].mineArr / arrCount * 100);
-                if (isNaN(edgeProbability)) {
-                    console.log('nanned')
-                  }
                 if (allProbability == false && (edgeProbability == 100 || edgeProbability == 0)) {
                     mineGrid[i][j].probability = edgeProbability;
                 }
