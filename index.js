@@ -175,7 +175,8 @@ function generateProbability(isAllProbability) {
     let i = index[0];
     let j = index[1];
     while (i > -1) {
-        arrGrid.push({mine: null, r: i, c: j});
+        const objectIndex = arrGrid.length;
+        arrGrid.push({mine: null, r: i, c: j, index: objectIndex});
         if (j == numColumns - 1) {
             index = findNextEdge(mineGrid, i+1, 0);
             i = index[0];
@@ -189,6 +190,10 @@ function generateProbability(isAllProbability) {
     }
     if (arrGrid.length > 0) {
         generateArrangements(mineGrid, JSON.parse(JSON.stringify(arrGrid)), 0);
+        if (arrGrid.length > 30) {
+            iterativeGenerateArrangements(mineGrid, arrGrid);
+        }
+            
         probabilityCalculation(edgeArr, mineGrid, isAllProbability);
     }
     else {
@@ -1460,6 +1465,62 @@ function canNotBeMine(mineGrid, grid, i, j) {
     return true;
 }
 
+const isNullMine = obj => obj.mine === null;
+const pickRandomObject = objList => objList[Math.floor(Math.random() * objList.length)];
+
+
+
+// Iteratively generate all possible mine arrangements for open edges
+function iterativeGenerateArrangements(mineGrid, grid) {
+    while (edgeArr.length < 330) {
+        const curPatterns = [JSON.parse(JSON.stringify(grid))];
+        let hasBroken = false;
+        const randomBase = Math.floor(Math.random() * grid.length)
+        for (let k = 0; k < grid.length; k++) {
+            let curPatternsLength = curPatterns.length;
+            const curPos = (k + randomBase) % grid.length;
+            if (curPatternsLength == 0) {
+                hasBroken = true;
+                break;
+            }
+            for (let w = 0; w < curPatternsLength; w++) {
+                const curPattern = curPatterns[w];
+                const randomObject = curPattern[curPos]
+                const i = randomObject.r;
+                const j = randomObject.c;
+                const index = randomObject.index
+                const a = canBeMine(mineGrid, curPattern, i, j)
+                const b = canNotBeMine(mineGrid, curPattern, i, j)
+                if (a && b) {
+                    if (curPatterns.length < 400) {
+                        const patternNo = JSON.parse(JSON.stringify(curPattern));
+                        curPattern[index].mine = true;
+                        patternNo[index].mine = false;
+                        curPatterns.push(patternNo)
+                    } else {
+                        curPattern[index].mine = Math.random() < 0.5;
+                    }
+                    
+                }
+                else if (a) {
+                    curPattern[index].mine = true;
+                }
+                else if (b) {
+                    curPattern[index].mine = false;
+                } else {
+                    curPatterns.splice(w, 1);
+                    w--;
+                    curPatternsLength--;
+                }
+            }
+
+        }
+        if (!hasBroken) {
+            edgeArr = edgeArr.concat(curPatterns)
+        }
+    }
+}
+
 // Recursively generate all possible mine arrangements for open edges
 function generateArrangements(mineGrid, grid, index) {
     let i = grid[index].r;
@@ -1467,7 +1528,7 @@ function generateArrangements(mineGrid, grid, index) {
     const a = canBeMine(mineGrid, grid, i, j)
     const b = canNotBeMine(mineGrid, grid, i, j)
     if (a && b) {
-        if (edgeArr.length < 1000) {
+        if (edgeArr.length < 300) {
             const patternNo = JSON.parse(JSON.stringify(grid));
             grid[index].mine = true;
             patternNo[index].mine = false;
@@ -1582,7 +1643,10 @@ function probabilityCalculation(edgeArr, mineGrid, allProbability) {
     for (i = 0; i < mineGrid.length; i++) {
         for (j = 0; j < mineGrid[i].length; j++) {
             if (mineGrid[i][j].edge == true && mineGrid[i][j].probability < 0) {
-                let edgeProbability = Math.round(mineGrid[i][j].mineArr / arrCount * 100);
+                const edgeProbability = Math.round(mineGrid[i][j].mineArr / arrCount * 100);
+                if (isNaN(edgeProbability)) {
+                    console.log('nanned')
+                  }
                 if (allProbability == false && (edgeProbability == 100 || edgeProbability == 0)) {
                     mineGrid[i][j].probability = edgeProbability;
                 }
@@ -1591,7 +1655,7 @@ function probabilityCalculation(edgeArr, mineGrid, allProbability) {
                 }
             }
             if (mineGrid[i][j].open == false && mineGrid[i][j].edge == false && mineGrid[i][j].probability < 0) {
-                let nonEdgeProbability = Math.round(mineGrid[i][j].mineArr / arrCount * 100);
+                const nonEdgeProbability = Math.round(mineGrid[i][j].mineArr / arrCount * 100);
                 if (allProbability == false && (nonEdgeProbability == 100 || nonEdgeProbability == 0)) {
                     mineGrid[i][j].probability = nonEdgeProbability;
                 }
