@@ -24,7 +24,13 @@
         &nbsp;
         <input type="checkbox" title="Include probabilities for unbordered cells." id="nonEdgeProbability" onclick="toggleShowNonEdge()" style="visibility:hidden">
         <label for="nonEdge" style="visibility:hidden">All</label>
+        <br>
+        <button type='button' style="margin-top: 10px" onclick='document.getElementById("numRows").value = 9; document.getElementById("numColumns").value = 9; document.getElementById("numMines").value = 10; generateGrid();'>Beginner</button>
+        <button type='button' onclick='document.getElementById("numRows").value = 16; document.getElementById("numColumns").value = 16; document.getElementById("numMines").value = 40; generateGrid();'>Intermediate</button>
+        <button type='button' onclick='document.getElementById("numRows").value = 16; document.getElementById("numColumns").value = 30; document.getElementById("numMines").value = 99; generateGrid();'>Expert</button>
+        <button type='button' onclick='document.getElementById("numRows").value = 16; document.getElementById("numColumns").value = 30; document.getElementById("numMines").value = 120; generateGrid();'>Hell</button>
       </form>
+
     <div id="timerBlock">
         <span id ="minesRemaining"></span>
         <span id="minutes">00</span>:<span id="seconds">00</span>
