@@ -188,7 +188,7 @@ function generateProbability(isAllProbability) {
         }
     }
     if (arrGrid.length > 0) {
-        generateArrangements(mineGrid, arrGrid, 0);
+        generateArrangements(mineGrid, JSON.parse(JSON.stringify(arrGrid)), 0);
         probabilityCalculation(edgeArr, mineGrid, isAllProbability);
     }
     else {
@@ -1462,29 +1462,47 @@ function canNotBeMine(mineGrid, grid, i, j) {
 
 // Recursively generate all possible mine arrangements for open edges
 function generateArrangements(mineGrid, grid, index) {
-    if (edgeArr.length > 500) {
-        return;
-    }
     let i = grid[index].r;
     let j = grid[index].c;
-    if (canBeMine(mineGrid, grid, i, j) == true) {
-        let patternYes = JSON.parse(JSON.stringify(grid));
-        patternYes[index].mine = true;
-        if (index < grid.length - 1) {
-            generateArrangements(mineGrid, patternYes, index+1);
-        }
-        else {
-            edgeArr.push(patternYes);
+    const a = canBeMine(mineGrid, grid, i, j)
+    const b = canNotBeMine(mineGrid, grid, i, j)
+    if (a && b) {
+        if (edgeArr.length < 1000) {
+            const patternNo = JSON.parse(JSON.stringify(grid));
+            grid[index].mine = true;
+            patternNo[index].mine = false;
+            if (index < grid.length - 1) {
+                generateArrangements(mineGrid, grid, index+1);
+                generateArrangements(mineGrid, patternNo, index+1);
+            } else {
+                edgeArr.push(grid);
+                edgeArr.push(patternNo);
+            }
+        } else {
+            grid[index].mine = Math.random() < 0.5;
+            if (index < grid.length - 1) {
+                generateArrangements(mineGrid, grid, index+1);
+            } else {
+                edgeArr.push(grid);
+            }
         }
     }
-    if (canNotBeMine(mineGrid, grid, i, j) == true) {
-        let patternNo = JSON.parse(JSON.stringify(grid));
-        patternNo[index].mine = false;
+    else if (a) {
+        grid[index].mine = true;
         if (index < grid.length - 1) {
-            generateArrangements(mineGrid, patternNo, index+1);
+            generateArrangements(mineGrid, grid, index+1);
         }
         else {
-            edgeArr.push(patternNo);
+            edgeArr.push(grid);
+        }
+    }
+    else if (b) {
+        grid[index].mine = false;
+        if (index < grid.length - 1) {
+            generateArrangements(mineGrid, grid, index+1);
+        }
+        else {
+            edgeArr.push(grid);
         }
     }
 }
