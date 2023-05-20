@@ -1,4 +1,6 @@
 # Minesweeper-Probability-Calculator
 Minesweeper with the option to see logic deductions and probability calculations. 
 
-This is a program that allows the user to play minesweeper in a browser with the options to see logical deductions and to see the probabilities for each cell being a mine
+This is a program is an auto-solver for minesweeper using a Monte Carlo approach.
+
+You can view it at https://dgisser.github.io/Minesweeper-Probability-Calculator/
