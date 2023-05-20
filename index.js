@@ -596,9 +596,6 @@ function makeTable(mineGrid, table, notEnd) {
                     cell.textContent = mineGrid[i][j].neighbors;
                     cell.className = mineGrid[i][j].neighbors;
                 }
-                else {
-                    cell.addEventListener('click', quickToggleFlagMode);
-                }
             }
             if (mineGrid[i][j].mine == true && mineGrid[i][j].open == true) {
                 cell.className = 'mine';
