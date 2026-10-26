@@ -508,7 +508,7 @@ function revealFlagged() {
 
     // Display table
     table.innerHTML = '';
-    makeTable(mineGrid, table);
+    makeTable(mineGrid, table, true);
 
     // Detect win
     if (isWin == true) {

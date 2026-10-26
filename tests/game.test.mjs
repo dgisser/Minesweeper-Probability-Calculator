@@ -265,6 +265,46 @@ test('rendering highlights only the single lowest-risk guess in purple', () => {
     assert.notEqual(cells[1].style.backgroundColor, '#6f42c1');
 });
 
+test('clicking a numbered cell preserves active probability colors', () => {
+    const game = loadGame();
+    game.evaluate(`
+        numRows = 4;
+        numColumns = 4;
+        numMines = 1;
+        unflaggedMines = 0;
+        isWin = false;
+        mineGrid = Array.from({ length: numRows }, () =>
+            Array.from({ length: numColumns }, () => ({
+                mine: false,
+                open: false,
+                neighbors: 0,
+                closedNeighbors: 0,
+                flag: false,
+                edge: false,
+                edgeCount: 0,
+                mineArr: 0,
+                probability: -1
+            }))
+        );
+        mineGrid[0][1].mine = true;
+        mineGrid[0][1].flag = true;
+        neighborCount(mineGrid);
+        mineGrid[0][0].open = true;
+
+        renderActivityFlags = [];
+        originalMakeTable = makeTable;
+        makeTable = function(grid, targetTable, gameIsActive) {
+            renderActivityFlags.push(gameIsActive);
+            return originalMakeTable(grid, targetTable, gameIsActive);
+        };
+
+        revealFlagged.call({ id: '0_0' });
+    `);
+
+    assert.equal(game.evaluate('renderActivityFlags[0]'), true);
+    assert.equal(game.evaluate('isWin'), false);
+});
+
 test('the autoplay selector returns exactly one deterministic safe move', () => {
     const game = loadGame();
     const move = game.evaluateJson(`findNextSafeCell([
