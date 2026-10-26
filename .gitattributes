@@ -1,0 +1,4 @@
+# The original browser entry points use CRLF. Treat the carriage return as
+# part of the line ending so whitespace checks focus on actual trailing spaces.
+/index.js whitespace=cr-at-eol
+/index.html whitespace=cr-at-eol

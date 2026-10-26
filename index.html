@@ -8,22 +8,22 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body id = "body">
-    <h1>Zen Minesweeper Monte Carlo Auto Solver</h1>
+    <h1>Zen Minesweeper Probability Auto Solver</h1>
     <form>
-        <label for="rows">Rows:</label>
-        <input type="number" id="numRows" name="numRows" min="1" max="16", step="1", value="16">
+        <label for="numRows">Rows:</label>
+        <input type="number" id="numRows" name="numRows" min="1" max="16" step="1" value="16">
         &nbsp;
-        <label for="columns">Columns:</label>
-        <input type="number" id="numColumns" name="numColumns" min="1" max="30", step="1", value="30">
+        <label for="numColumns">Columns:</label>
+        <input type="number" id="numColumns" name="numColumns" min="1" max="30" step="1" value="30">
         &nbsp;
-        <label for="mines">Number of Mines:</label>
-        <input type="number" id="numMines" min="1" max="120", step="1", value="99">
+        <label for="numMines">Number of Mines:</label>
+        <input type="number" id="numMines" min="1" max="130" step="1" value="99">
         &nbsp;
         <input type="button" onclick="generateGrid()" value="New Game">
         <!-- <input type="button" onclick="getVariables()" value="Variable Return"> -->
         &nbsp;
         <input type="checkbox" title="Include probabilities for unbordered cells." id="nonEdgeProbability" onclick="toggleShowNonEdge()" style="visibility:hidden">
-        <label for="nonEdge" style="visibility:hidden">All</label>
+        <label for="nonEdgeProbability" style="visibility:hidden">All</label>
         <br>
         <button type='button' style="margin-top: 10px" onclick='document.getElementById("numRows").value = 9; document.getElementById("numColumns").value = 9; document.getElementById("numMines").value = 10; generateGrid();'>Beginner</button>
         <button type='button' onclick='document.getElementById("numRows").value = 16; document.getElementById("numColumns").value = 16; document.getElementById("numMines").value = 40; generateGrid();'>Intermediate</button>
@@ -37,7 +37,8 @@
         <input type="checkbox" title="Change left click to flag. You can also click on revealed empty cells to switch modes." id="flagMode" onclick="toggleFlagMode(false)" style="visibility:hidden">
         <label for="flagMode" style="visibility:hidden">Flag Mode</label>
     </div>
-    <script src="index.js"\> </script>
+    <script src="probability-engine.js"></script>
+    <script src="index.js"></script>
     <script>generateGrid()</script>
 </body>
 </html>

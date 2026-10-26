@@ -1,0 +1,15 @@
+{
+  "name": "minesweeper-probability-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A dependency-free Minesweeper game with exact mine probabilities and deliberately paced autoplay.",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test",
+    "check": "node --check probability-engine.js && node --check index.js && node --test",
+    "benchmark": "node scripts/benchmark.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -19,6 +19,9 @@ let timer;
 let isWin;
 let hoveredElement;
 let hardQuit = false;
+const AUTO_SOLVE_DELAY_MS = 100;
+const OFF_FRONTIER_DISPLAY_THRESHOLD = 7;
+const BEST_GUESS_BACKGROUND = '#6f42c1';
 
 // Return all current variables for debugging
 function getVariables() {
@@ -92,7 +95,7 @@ function generateGrid() {
     edgeArr = [];
     table.innerHTML = '';
     isWin = false;
-    
+
     // Get New Table Data
     numRows = parseInt(document.getElementById('numRows').value);
     numColumns = parseInt(document.getElementById('numColumns').value);
@@ -135,7 +138,7 @@ function generateGrid() {
               }
             }
           });
-          
+
         grid.addEventListener('mouseover', function(event) {
             // check if the target element of the event is a cell
             // update the hovered cell only if it has changed
@@ -149,69 +152,37 @@ function generateGrid() {
 
 // Run all probablity calculations
 function generateProbability(isAllProbability) {
-    // // Reset old probability values
-    // for (let i = 0; i < mineGrid.length; i++) {
-    //     for (let j = 0; j < mineGrid[i].length; j++) {
-    //         mineGrid[i][j].mineArr = 0;
-    //         mineGrid[i][j].probability = -1;
-    //     }
-    // }
+    // Keep this function as the UI-facing adapter. The exact solver itself is
+    // isolated in probability-engine.js so it can be tested without the DOM.
     hundredCount = 0;
     arrGrid = [];
     edgeArr = [];
 
-    // Run basic logic rules
-    edgeCount(mineGrid);
-    let ret1 = true;
-    let ret2 = true;
-    while (ret1 == true || ret2 == true) {
-        ret1 = ruleOne(mineGrid);
-        ret2 = ruleTwo(mineGrid);
+    for (let row = 0; row < mineGrid.length; row++) {
+        for (let column = 0; column < mineGrid[row].length; column++) {
+            mineGrid[row][column].mineArr = 0;
+            mineGrid[row][column].probability = -1;
+            mineGrid[row][column].edge = false;
+        }
     }
-    ruleThree(mineGrid);
 
-    // Calculate arrangements and probabilities
-    let index = findNextEdge(mineGrid, 0, 0);
-    let i = index[0];
-    let j = index[1];
-    while (i > -1) {
-        const objectIndex = arrGrid.length;
-        arrGrid.push({mine: null, r: i, c: j, index: objectIndex});
-        if (j == numColumns - 1) {
-            index = findNextEdge(mineGrid, i+1, 0);
-            i = index[0];
-            j = index[1];
-        }
-        else {
-            index = findNextEdge(mineGrid, i, j+1);
-            i = index[0];
-            j = index[1];
-        }
+    edgeCount(mineGrid);
+    const result = MinesweeperProbabilityEngine.calculateProbabilities(mineGrid, numMines);
+    if (!result.valid) {
+        console.warn('Probability calculation skipped: ' + result.reason);
+        return false;
     }
-    if (arrGrid.length > 0) {
-        // generateArrangements(mineGrid, JSON.parse(JSON.stringify(arrGrid)), 0);
-        // if (arrGrid.length > 20) {
-            iterativeGenerateArrangements(mineGrid, arrGrid);
-        // }
-            
-        probabilityCalculation(edgeArr, mineGrid, isAllProbability);
-    }
-    else {
-        let nonEdge = nonEdgeCount(mineGrid);
-        let remainingMines = numMines - hundredCount;
-        for (let i = 0; i < mineGrid.length; i++) {
-            for (let j = 0; j < mineGrid[i].length; j++) {
-                if (mineGrid[i][j].open == false && mineGrid[i][j].edge == false) {
-                    mineGrid[i][j].probability = Math.round(remainingMines / nonEdge * 100);
-                }
+
+    for (let row = 0; row < mineGrid.length; row++) {
+        for (let column = 0; column < mineGrid[row].length; column++) {
+            const mineProbability = result.mineProbabilities[row][column];
+            if (mineProbability !== null) {
+                mineGrid[row][column].probability = mineProbability * 100;
             }
         }
-
     }
 
-    // Display table
-    table.innerHTML = '';
-    // makeTable(mineGrid, table, true);
+    return true;
 }
 
 // Randomly place mines on grid
@@ -325,7 +296,7 @@ function neighborCount(mineGrid) {
             }
         }
     }
-    
+
 }
 
 function revealCellContents(i, j) {
@@ -385,7 +356,7 @@ function revealCellContents(i, j) {
     hundredCount = 0;
     arrGrid = [];
     edgeArr = [];
-    
+
     generateProbability(true);
 
     // Display table
@@ -408,27 +379,34 @@ function revealCellContents(i, j) {
         makeTable(mineGrid, table);
         revealRunning = false;
     } else {
-        let row = -1;
-        let col = -1;
-        let minNeighbors = 9;
-        for (let i = 0; i < mineGrid.length; i++) {
-            for (let idx = 0; idx < mineGrid[0].length; idx++) {
-                cur = mineGrid[i][idx]
-                if (cur.edge && cur.probability == 0 && cur.closedNeighbors < minNeighbors) {
-                    minNeighbors = cur.closedNeighbors;
-                    row = i
-                    col = idx
-                }
-            }
-        }
-        if (row != -1) {
+        const nextSafeCell = findNextSafeCell(mineGrid);
+        if (nextSafeCell != null) {
             setTimeout(() => {
-                revealCellContents(row, col);
-            }, 100);
+                revealCellContents(nextSafeCell.row, nextSafeCell.column);
+            }, AUTO_SOLVE_DELAY_MS);
         } else{
             revealRunning = false;
         }
     }
+}
+
+// Return one move only. Recomputing after every reveal is intentional: it
+// preserves the solver's calm, one-area-at-a-time animation.
+function findNextSafeCell(grid) {
+    let best = null;
+    let fewestClosedNeighbors = 9;
+
+    for (let row = 0; row < grid.length; row++) {
+        for (let column = 0; column < grid[row].length; column++) {
+            const cell = grid[row][column];
+            if (cell.edge && cell.probability == 0 && cell.closedNeighbors < fewestClosedNeighbors) {
+                fewestClosedNeighbors = cell.closedNeighbors;
+                best = { row, column };
+            }
+        }
+    }
+
+    return best;
 }
 
 let revealRunning = false;
@@ -484,6 +462,8 @@ function flag(e) {
     // Flag or unflag selected cell
     flagLogic(this.id)
     generateProbability(true);
+    table.innerHTML = '';
+    makeTable(mineGrid, table, true);
 }
 
 // Run all related functions upon player neighbor click
@@ -558,15 +538,77 @@ function getColor(value){
     return ["hsl(",hue,",100%,50%)"].join("");
 }
 
+// Frontier probabilities are always visible. Away from the frontier, only
+// surface information that materially differs from the board's starting mine
+// density; otherwise a large field of identical labels obscures the board.
+function shouldShowProbability(cell) {
+    if (cell.probability < 0) {
+        return false;
+    }
+    if (cell.probability === 0 || showNonEdge.checked || cell.edge) {
+        return true;
+    }
+
+    const initialMineProbability = numMines / (numRows * numColumns) * 100;
+    return Math.abs(cell.probability - initialMineProbability) > OFF_FRONTIER_DISPLAY_THRESHOLD;
+}
+
+function formatProbability(probability) {
+    if (probability === 0) {
+        return '0';
+    }
+
+    const rounded = Math.round(probability);
+    return rounded === 0 ? '<1' : rounded.toString();
+}
+
+// Safe cells are handled by autoplay. When a guess is required, identify one
+// lowest-risk cell for the player; row-major order provides a stable tie-break.
+function findLowestProbabilityCell(grid) {
+    let best = null;
+
+    for (let row = 0; row < grid.length; row++) {
+        for (let column = 0; column < grid[row].length; column++) {
+            const cell = grid[row][column];
+            if (!cell.open && !cell.flag && cell.probability === 0) {
+                return null;
+            }
+        }
+    }
+
+    for (let row = 0; row < grid.length; row++) {
+        for (let column = 0; column < grid[row].length; column++) {
+            const cell = grid[row][column];
+            if (cell.open || cell.flag || cell.probability <= 0 || cell.probability >= 100) {
+                continue;
+            }
+            if (best == null || cell.probability < best.probability) {
+                best = { row, column, probability: cell.probability };
+            }
+        }
+    }
+
+    return best;
+}
+
 // Generate HTML table from grid
 function makeTable(mineGrid, table, notEnd) {
     let cellsOpen = 0;
+    const lowestProbabilityCell = findLowestProbabilityCell(mineGrid);
     for (let i = 0; i < mineGrid.length; i++) {
         let row = document.createElement('tr');
         for (let j = 0; j < mineGrid[i].length; j++) {
             let cell = document.createElement('td');
             cell.id = i + '_' + j;
-            if (mineGrid[i][j].edge && !mineGrid[i][j].flag && notEnd) {
+            const isLowestProbability = lowestProbabilityCell != null
+                && lowestProbabilityCell.row === i
+                && lowestProbabilityCell.column === j;
+            if (isLowestProbability) {
+                cell.style.backgroundColor = BEST_GUESS_BACKGROUND;
+                cell.style.color = 'white';
+                cell.style.fontWeight = 'bold';
+            }
+            else if (shouldShowProbability(mineGrid[i][j]) && !mineGrid[i][j].flag && notEnd) {
                 cell.style.backgroundColor = getColor(mineGrid[i][j].probability);
             }
             if (mineGrid[i][j].open == false) {
@@ -603,15 +645,9 @@ function makeTable(mineGrid, table, notEnd) {
             if (mineGrid[i][j].flag == true) {
                 cell.className = 'flag';
             }
-            else if (mineGrid[i][j].probability >= 0) {
-                if (showNonEdge.checked == true) {
-                    cell.textContent = mineGrid[i][j].probability;
-                    cell.className = 'hidden' + flagMode.checked;
-                }
-                else if (mineGrid[i][j].edge == true) {
-                    cell.textContent = mineGrid[i][j].probability;
-                    cell.className = 'hidden' + flagMode.checked;
-                }
+            else if (isLowestProbability || shouldShowProbability(mineGrid[i][j])) {
+                cell.textContent = formatProbability(mineGrid[i][j].probability);
+                cell.className = 'hidden' + flagMode.checked;
             }
             row.appendChild(cell);
         }
@@ -916,6 +952,10 @@ function edgeCount(mineGrid) {
         }
     }
 }
+
+// Legacy randomized solver implementation. The active probability path uses
+// probability-engine.js through generateProbability(). These functions remain
+// temporarily to keep the backend replacement isolated and reviewable.
 
 // Count how many cells with zero probability are around a cell
 function probabilityZeroCount(mineGrid, i, j) {
@@ -1498,7 +1538,7 @@ function iterativeGenerateArrangements(mineGrid, grid) {
                     } else {
                         curPattern[index].mine = Math.random() < 0.5;
                     }
-                    
+
                 }
                 else if (a) {
                     curPattern[index].mine = true;
@@ -1584,21 +1624,21 @@ function nonEdgeCount(mineGrid) {
 function productRange(a, b) {
     let prd = a
     let i = a;
-   
+
     while (i++ < b) {
       prd*=i;
     }
     return prd;
   }
-  
+
 // Calculate combinations math
-  function combinations(n, r) 
+  function combinations(n, r)
   {
-    if (n == r || r == 0) 
+    if (n == r || r == 0)
     {
       return 1;
-    } 
-    else 
+    }
+    else
     {
       if (r < n - r) {
           r = n - r;
